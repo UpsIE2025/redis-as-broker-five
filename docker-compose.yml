@@ -6,16 +6,58 @@ services:
     container_name: broker
     ports:
       - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
     volumes:
       - ./broker_data:/data
+    networks:
+      - springboot-network
+
   redis-commander:
     image: rediscommander/redis-commander:latest
     environment:
-      - REDIS_HOSTS=local:broker:6379
+      - REDIS_HOSTS=broker:6379
     ports:
       - "8081:8081"
     depends_on:
       - broker
+    networks:
+      - springboot-network
+
+  group-producer:
+    image: group-producer:latest
+    container_name: group-producer
+    ports:
+      - "8080:8080"
+    depends_on:
+      broker:
+        condition: service_healthy
+    environment:
+      - SPRING_REDIS_HOST=broker
+      - SPRING_REDIS_PORT=6379
+    networks:
+      - springboot-network
+
+  group-consumer:
+    image: group-consumer:latest
+    container_name: group-consumer
+    ports:
+      - "8082:8082"
+    depends_on:
+      broker:
+        condition: service_healthy
+    environment:
+      - SPRING_REDIS_HOST=broker
+      - SPRING_REDIS_PORT=6379
+    networks:
+      - springboot-network
 
 volumes:
   broker_data:
+
+networks:
+  springboot-network:
+    driver: bridge

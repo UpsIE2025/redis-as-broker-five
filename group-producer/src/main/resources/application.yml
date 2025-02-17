@@ -1,0 +1,10 @@
+spring:
+  application:
+    name: group-producer
+  data:
+    redis:
+      database: 0
+      host: localhost
+      port: 6379
+      password: 'Cristi@n3'
+      timeout: 60000
