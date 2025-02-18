@@ -14,7 +14,7 @@ services:
     volumes:
       - ./broker_data:/data
     networks:
-      - springboot-network
+      - broker-network
 
   redis-commander:
     image: rediscommander/redis-commander:latest
@@ -25,10 +25,11 @@ services:
     depends_on:
       - broker
     networks:
-      - springboot-network
+      - broker-network
 
   group-producer:
-    image: group-producer:latest
+    build:
+      context: ./group-producer/
     container_name: group-producer
     ports:
       - "8080:8080"
@@ -38,26 +39,29 @@ services:
     environment:
       - SPRING_REDIS_HOST=broker
       - SPRING_REDIS_PORT=6379
+      - BROKER_CHANNEL=my_channel
     networks:
-      - springboot-network
+      - broker-network
 
   group-consumer:
-    image: group-consumer:latest
+    build:
+      context: ./consumer/
     container_name: group-consumer
     ports:
-      - "8082:8082"
+      - "8082:8080"
     depends_on:
       broker:
         condition: service_healthy
     environment:
       - SPRING_REDIS_HOST=broker
       - SPRING_REDIS_PORT=6379
+      - BROKER_CHANNEL=my_channel
     networks:
-      - springboot-network
+      - broker-network
 
 volumes:
   broker_data:
 
 networks:
-  springboot-network:
+  broker-network:
     driver: bridge

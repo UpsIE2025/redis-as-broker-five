@@ -4,8 +4,8 @@ spring:
   data:
     redis:
       database: 0
-      host: ${SPRING_REDIS_HOST}
-      port: ${SPRING_REDIS_PORT}
+      host: localhost
+      port: 6379
       timeout: 60000
 broker:
-  channel: ${BROKER_CHANNEL}
+  channel: test_channel

@@ -13,8 +13,6 @@ public class RedisMessageLIstener implements MessageListener {
 
     @Override
     public void onMessage(org.springframework.data.redis.connection.Message redisMessage, byte[] pattern) {
-        String content = new String(redisMessage.getBody());
-        Message message = new Message(content);
-        messageProcessingService.processMessage(message);
+        messageProcessingService.processMessage(new Message(new String(redisMessage.getBody())));
     }
 }

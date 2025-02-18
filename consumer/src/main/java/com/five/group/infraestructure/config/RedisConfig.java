@@ -1,9 +1,14 @@
 package com.five.group.infraestructure.config;
 
 import com.five.group.infraestructure.redis.RedisMessageLIstener;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
+import org.springframework.data.redis.connection.jedis.JedisClientConfiguration;
+import org.springframework.data.redis.connection.jedis.JedisConnectionFactory;
 import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
@@ -11,27 +16,38 @@ import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 @Configuration
 public class RedisConfig {
 
+    @Value("${spring.data.redis.host}")
+    private String redisHost;
+
+    @Value("${spring.data.redis.port}")
+    private Integer redisPort;
+
     @Bean
     public RedisMessageListenerContainer redisContainer(RedisConnectionFactory connectionFactory,
                                                         MessageListenerAdapter listenerAdapter,
                                                         ChannelTopic topic) {
         RedisMessageListenerContainer container = new RedisMessageListenerContainer();
-        container.setConnectionFactory(connectionFactory);
+        container.setConnectionFactory(jedisConnectionFactory());
         container.addMessageListener(listenerAdapter, topic);
+
         return container;
     }
 
-    /**
-     * Este adaptador se encargará de delegar los mensajes de RedisMessageListener
-     */
+    @Bean
+    public JedisConnectionFactory jedisConnectionFactory() {
+        RedisStandaloneConfiguration config = new RedisStandaloneConfiguration(redisHost, redisPort);
+        JedisClientConfiguration jedisClientConfiguration = JedisClientConfiguration.builder().usePooling().build();
+        JedisConnectionFactory factory = new JedisConnectionFactory(config, jedisClientConfiguration);
+        factory.afterPropertiesSet();
+
+        return factory;
+    }
+
     @Bean
     public MessageListenerAdapter listenerAdapter(RedisMessageLIstener redisMessageListener) {
         return new MessageListenerAdapter(redisMessageListener);
     }
 
-    /**
-     * Este método define el canal en el que se suscribe el listener
-     */
     @Bean
     public ChannelTopic topic() {
         return new ChannelTopic("my_channel");
